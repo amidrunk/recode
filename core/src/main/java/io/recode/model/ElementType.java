@@ -1,0 +1,27 @@
+package io.recode.model;
+
+public enum ElementType {
+
+    CONSTANT,
+    RETURN_VALUE,
+    UNARY_OPERATOR,
+    BINARY_OPERATOR,
+    RETURN,
+    VARIABLE_REFERENCE,
+    METHOD_CALL,
+    FIELD_REFERENCE,
+    VARIABLE_ASSIGNMENT,
+    LAMBDA,
+    BRANCH,
+    NEW,
+    NEW_ARRAY,
+    ARRAY_STORE,
+    FIELD_ASSIGNMENT,
+    CAST,
+    ARRAY_LOAD,
+    INCREMENT,
+    ALLOCATE,
+    GOTO,
+    COMPARE;
+
+}
