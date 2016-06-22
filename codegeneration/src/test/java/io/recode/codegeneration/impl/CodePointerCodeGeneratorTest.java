@@ -24,6 +24,8 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -220,6 +222,18 @@ public class CodePointerCodeGeneratorTest {
         final String generatedCode = toString(new ArrayLoadImpl(AST.local("foo", String[].class, 1), AST.constant(1234), String.class));
 
         assertEquals("foo[1234]", generatedCode);
+    }
+
+    @Test
+    public void emptyLambdaShouldBeGeneratedAsEmptyLambda() {
+        final Runnable runnable = () -> {};
+        assertEquals("Runnable runnable = () -> {}", toCode(adjacent(-1)));
+
+        final Consumer<String> consumer = str -> {};
+        assertEquals("Consumer consumer = str -> {}", toCode(adjacent(-1)));
+
+        final BiConsumer<String, String> biConsumer = (str1, str2) -> {};
+        assertEquals("BiConsumer biConsumer = (str1, str2) -> {}", toCode(adjacent(-1)));
     }
 
     private String toString(Element element) {

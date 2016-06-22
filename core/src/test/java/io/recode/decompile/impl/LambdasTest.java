@@ -3,6 +3,7 @@ package io.recode.decompile.impl;
 import io.recode.Caller;
 import io.recode.ClassModelTestUtils;
 import io.recode.classfile.*;
+import io.recode.classfile.Method;
 import io.recode.decompile.CodePointer;
 import io.recode.decompile.Decompiler;
 import io.recode.decompile.Lambdas;
@@ -12,6 +13,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.lang.reflect.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;

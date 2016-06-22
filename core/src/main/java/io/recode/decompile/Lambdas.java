@@ -3,14 +3,10 @@ package io.recode.decompile;
 import io.recode.classfile.*;
 import io.recode.classfile.impl.LocalVariableImpl;
 import io.recode.classfile.impl.LocalVariableTableImpl;
-import io.recode.util.Range;
-import io.recode.model.SyntaxTreeVisitor;
 import io.recode.decompile.impl.CodePointerImpl;
 import io.recode.decompile.impl.InputStreamCodeStream;
-import io.recode.model.Element;
-import io.recode.model.ElementType;
-import io.recode.model.Lambda;
-import io.recode.model.LocalVariableReference;
+import io.recode.model.*;
+import io.recode.util.Range;
 
 import java.io.IOException;
 import java.util.*;

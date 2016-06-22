@@ -278,10 +278,13 @@ public final class CodePointerCodeGenerator implements CodeGenerator<CodePointer
                 return;
             }
             case INVOKE_INTERFACE: {
-                // TODO Can be instance?
-                out.append(simpleTypeName(lambda.getDeclaringClass()))
-                        .append("::")
-                        .append(lambda.getBackingMethodName());
+                if (lambda.getSelf().isPresent()) {
+                    append(context, codePointer.forElement(lambda.getSelf().get()), out);
+                } else {
+                    out.append(simpleTypeName(lambda.getDeclaringClass()));
+                }
+
+                out.append("::").append(lambda.getBackingMethodName());
                 return;
             }
             case INVOKE_STATIC:
@@ -338,21 +341,12 @@ public final class CodePointerCodeGenerator implements CodeGenerator<CodePointer
             if (lambdaMethodElement.getElementType() == ElementType.RETURN_VALUE) {
                 final ReturnValue returnValue = (ReturnValue) lambdaMethodElement;
 
-                if (backingMethod.getSignature().getParameterTypes().isEmpty()) {
-                    out.append("() -> ");
-                } else if (backingMethod.getSignature().getParameterTypes().size() == 1) {
-                    final int parameterIndex;
-
-                    if (lambda.getReferenceKind() == ReferenceKind.INVOKE_SPECIAL) {
-                        parameterIndex = 1;
-                    } else {
-                        parameterIndex = 0;
-                    }
-                    final LocalVariable parameter = backingMethod.getLocalVariableTable().get().getLocalVariables().get(parameterIndex);
-                    out.append(parameter.getName()).append(" -> ");
-                }
+                appendInlineLambdaPrefix(lambda, backingMethod, out);
 
                 append(context, codePointer.forElement(returnValue.getValue()), out);
+            } else if (lambdaMethodElement.getElementType() == ElementType.RETURN) {
+                appendInlineLambdaPrefix(lambda, backingMethod, out);
+                out.write("{}");
             } else {
                 append(context, codePointer.forElement(lambdaMethodElement), out);
             }
@@ -375,6 +369,50 @@ public final class CodePointerCodeGenerator implements CodeGenerator<CodePointer
                     append(context, codePointer.forElement(lambdaMethodElement), indent(subContext, out));
                     out.append(";\n");
                 }
+            }
+        }
+    }
+
+    private void appendInlineLambdaPrefix(Lambda lambda, Method backingMethod, PrintWriter out) {
+        if (backingMethod.getSignature().getParameterTypes().isEmpty()) {
+            out.append("() -> ");
+        } else {
+            final int numberOfParameters = backingMethod.getSignature().getParameterTypes().size();
+
+            if (numberOfParameters == 1) {
+                final int parameterIndex;
+
+                if (lambda.getReferenceKind() == ReferenceKind.INVOKE_SPECIAL) {
+                    parameterIndex = 1;
+                } else {
+                    parameterIndex = 0;
+                }
+
+                final LocalVariable parameter = backingMethod.getLocalVariableTable().get().getLocalVariables().get(parameterIndex);
+
+                out.append(parameter.getName()).append(" -> ");
+            } else {
+                final int firstParameterIndex;
+
+                if (lambda.getReferenceKind() == ReferenceKind.INVOKE_SPECIAL) {
+                    firstParameterIndex = 1;
+                } else {
+                    firstParameterIndex = 0;
+                }
+
+                out.append('(');
+
+                for (int i = 0; i < numberOfParameters; i++) {
+                    final LocalVariable parameter = backingMethod.getLocalVariableTable().get().getLocalVariables().get(firstParameterIndex + i);
+
+                    out.append(parameter.getName());
+
+                    if (i != numberOfParameters - 1) {
+                        out.append(", ");
+                    }
+                }
+
+                out.append(") -> ");
             }
         }
     }
