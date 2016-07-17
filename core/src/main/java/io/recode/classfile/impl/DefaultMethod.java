@@ -109,43 +109,6 @@ public final class DefaultMethod implements Method {
                 .orElseThrow(() -> new IllegalStateException("Code attribute is not present for method '" + getName() + "'"));
     }
 
-    @Override
-    public Range getCodeRangeForLineNumber(int lineNumber) {
-        final LineNumberTable lineNumberTable = getRequiredLineNumberTable();
-        final LineNumberTableEntry[] entriesForLineNumber = collectEntriesForLineNumber(lineNumberTable, Arrays.asList(lineNumber));
-        final LineNumberTableEntry startEntry = entriesForLineNumber[0];
-
-        final Optional<LineNumberTableEntry> endEntry = lineNumberTable.getEntries().stream()
-                .filter(e -> e.getStartPC() > entriesForLineNumber[entriesForLineNumber.length - 1].getStartPC())
-                .findFirst();
-
-        return new Range(startEntry.getStartPC(), endEntry.isPresent() ? endEntry.get().getStartPC() - 1 : getCode().getCodeLength());
-    }
-
-    @Override
-    @Deprecated
-    public InputStream getCodeForLineNumber(int lineNumber) {
-        final Range codeRangeForLineNumber = getCodeRangeForLineNumber(lineNumber);
-
-        try (InputStream inputStream = getCode().getCode()) {
-            final int numberOfByteCodes = codeRangeForLineNumber.getTo() - codeRangeForLineNumber.getFrom() + 1;
-
-            inputStream.skip(codeRangeForLineNumber.getFrom());
-
-            if (inputStream.available() == numberOfByteCodes) {
-                return inputStream;
-            }
-
-            final byte[] buffer = new byte[numberOfByteCodes];
-
-            inputStream.read(buffer);
-
-            return new ByteArrayInputStream(buffer);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     @SuppressWarnings("unchecked")
     public Optional<LineNumberTable> getLineNumberTable() {
         return (Optional) getCode().getAttributes().stream()
@@ -189,30 +152,6 @@ public final class DefaultMethod implements Method {
                 .filter(a -> a.getName().equals(LocalVariableTable.ATTRIBUTE_NAME))
                 .map(a -> (LocalVariableTable) a)
                 .findFirst();
-    }
-
-    private LineNumberTableEntry[] collectEntriesForLineNumber(LineNumberTable lineNumberTable, List<Integer> lineNumbers) {
-        final LineNumberTableEntry[] entriesForLineNumber = lineNumberTable.getEntries().stream()
-                .filter(e -> lineNumbers.contains(e.getLineNumber()))
-                .toArray(LineNumberTableEntry[]::new);
-
-        if (entriesForLineNumber.length == 0) {
-            throw new IllegalStateException("No code exists at " + lineNumbers + " " + getClassFile().getName() + "::" + getName());
-        }
-
-        final LineNumberTableEntry[] allEntries = lineNumberTable.getEntries().stream()
-                .filter(e -> e.getStartPC() >= entriesForLineNumber[0].getStartPC() && e.getStartPC() <= entriesForLineNumber[entriesForLineNumber.length - 1].getStartPC())
-                .toArray(LineNumberTableEntry[]::new);
-
-        if (allEntries.length > entriesForLineNumber.length) {
-            final Integer[] newLineNumbers = Arrays.stream(allEntries).map(LineNumberTableEntry::getLineNumber)
-                    .distinct()
-                    .toArray(Integer[]::new);
-
-            return collectEntriesForLineNumber(lineNumberTable, Arrays.asList(newLineNumbers));
-        }
-
-        return allEntries;
     }
 
     @Override

@@ -19,23 +19,16 @@ public final class CompositeDecompilationProgressCallback implements Decompilati
     }
 
     @Override
-    public void beforeInstruction(DecompilationContext context) {
+    public void beforeInstruction(DecompilationContext context, int instruction) {
         for (DecompilationProgressCallback callback : callbacks) {
-            callback.beforeInstruction(context);
+            callback.beforeInstruction(context, instruction);
         }
     }
 
     @Override
-    public void preparingInstruction(DecompilationContext context, int instruction) {
+    public void afterInstruction(DecompilationContext context, int instruction) {
         for (DecompilationProgressCallback callback : callbacks) {
-            callback.preparingInstruction(context, instruction);
-        }
-    }
-
-    @Override
-    public void afterInstruction(DecompilationContext context) {
-        for (DecompilationProgressCallback callback : callbacks) {
-            callback.afterInstruction(context);
+            callback.afterInstruction(context, instruction);
         }
     }
 }

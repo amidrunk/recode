@@ -255,4 +255,19 @@ public class ModelQueriesTest {
 
         verify(expression).getType();
     }
+
+    @Test
+    public void anyShouldMatchAnyElement() {
+        assertTrue(ModelQueries.any().test(AST.constant(1)));
+        assertTrue(ModelQueries.any().test(mock(Element.class)));
+    }
+
+    @Test
+    public void fieldRefShouldMatchFieldWithMatchingProperties() {
+        final Predicate<FieldReference> predicate = ModelQueries.field(ModelQueries.any(), "aField", String.class);
+
+        assertTrue(predicate.test(AST.field(AST.constant("foo"), String.class, "aField")));
+        assertFalse(predicate.test(AST.field(AST.constant("foo"), int.class, "aField")));
+        assertFalse(predicate.test(AST.field(AST.constant("foo"), String.class, "anotherField")));
+    }
 }

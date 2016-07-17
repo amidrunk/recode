@@ -8,6 +8,7 @@ import org.mockito.Mockito;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 
@@ -358,4 +359,16 @@ public class SyntaxTreeVisitorTest {
         assertEquals(Optional.of(constant(2)), result);
     }
 
+    @Test
+    public void collectShouldReturnAllMatchingElementsInModel() {
+        final Element[] elements = new Element[] {
+            AST.constant(1),
+            AST.call(String.class, "valueOf", String.class, AST.constant(2)),
+            AST.$return(AST.constant(3))
+        };
+
+        final List<Element> result = SyntaxTreeVisitor.collect(elements, e -> e.getElementType() == ElementType.CONSTANT);
+
+        assertEquals(Arrays.asList(AST.constant(1), AST.constant(2), AST.constant(3)), result);
+    }
 }

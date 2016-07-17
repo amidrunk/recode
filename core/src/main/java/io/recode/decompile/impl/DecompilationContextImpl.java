@@ -6,6 +6,7 @@ import io.recode.model.Expression;
 import io.recode.model.ModelFactory;
 import io.recode.model.Statement;
 import io.recode.TypeResolver;
+import io.recode.model.impl.LocalVariableReferenceImpl;
 import io.recode.util.*;
 import io.recode.classfile.Method;
 import io.recode.util.Stack;
@@ -278,7 +279,7 @@ public final class DecompilationContextImpl implements DecompilationContext {
 
     private void checkStackNotEmpty() {
         if (stack.isEmpty()) {
-            throw new IllegalStateException("No syntax element is available on the stack");
+            throw new IllegalStateException("No syntax element is available on the stack (decompiling line number " + getLineNumberCounter().get() + ")");
         }
     }
 

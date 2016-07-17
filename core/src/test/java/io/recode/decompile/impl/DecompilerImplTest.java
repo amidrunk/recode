@@ -8,6 +8,7 @@ import io.recode.decompile.*;
 import io.recode.decompile.DecompilationHistoryCallback.DecompilerState;
 import io.recode.model.*;
 import io.recode.model.impl.*;
+import io.recode.util.Methods;
 import io.recode.util.Range;
 import org.junit.Assert;
 import org.junit.Before;
@@ -44,6 +45,20 @@ public class DecompilerImplTest {
     public void setup() {
         when(exampleMethod.getClassFile()).thenReturn(exampleClassFile);
         when(exampleMethod.getLineNumberTable()).thenReturn(Optional.<LineNumberTable>empty());
+    }
+
+    @Test
+    public void callbackShouldBeNotifiedBeforeInstructionIsExecuted() throws Exception {
+        final Decompiler decompiler = decompilerWithDelegate(ByteCode.nop, mock(DecompilerDelegate.class));
+        final Method method = methodWithLineNumberTable();
+        final DecompilationProgressCallback callback = mock(DecompilationProgressCallback.class);
+
+        decompiler.parse(method, CodeStreamTestUtils.codeStream(ByteCode.nop), callback);
+
+        final InOrder inOrder = inOrder(callback);
+
+        inOrder.verify(callback).beforeInstruction(any(), eq(ByteCode.nop));
+        inOrder.verify(callback).afterInstruction(any(), eq(ByteCode.nop));
     }
 
     @Test
@@ -213,7 +228,7 @@ public class DecompilerImplTest {
             }
 
             return null;
-        }).when(callback).afterInstruction(any());
+        }).when(callback).afterInstruction(any(), any());
 
         decompileCallerWithCallback(caller, new CompositeDecompilationProgressCallback(new DecompilationProgressCallback[]{callback, history}));
 
@@ -639,7 +654,7 @@ public class DecompilerImplTest {
         final Decompiler decompiler = new DecompilerImpl();
         final Method method = ClassModelTestUtils.methodWithName(getClass(), caller.getMethodName());
 
-        try (CodeStream code = new InputStreamCodeStream(method.getCodeForLineNumber(caller.getLineNumber()))) {
+        try (CodeStream code = new InputStreamCodeStream(Methods.getCodeForLineNumber(method, caller.getLineNumber()))) {
             decompiler.parse(method, code, callback);
         }
     }

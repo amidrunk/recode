@@ -1,14 +1,16 @@
 package io.recode.decompile.impl;
 
 import io.recode.Caller;
+import io.recode.classfile.ByteCode;
+import io.recode.classfile.LineNumberTable;
+import io.recode.classfile.LineNumberTableEntry;
 import io.recode.classfile.ReferenceKind;
-import io.recode.decompile.CodeLocationDecompiler;
-import io.recode.decompile.CodePointer;
-import io.recode.decompile.DecompilationProgressCallback;
+import io.recode.decompile.*;
 import io.recode.model.*;
 import io.recode.model.impl.ArrayLoadImpl;
 import io.recode.model.impl.ConstantImpl;
 import io.recode.model.impl.VariableAssignmentImpl;
+import org.apache.commons.io.IOUtils;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -16,6 +18,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -88,15 +91,6 @@ public class CodeLocationDecompilerImplTest {
         assertEquals("myList", lambda.getEnclosedVariables().get(0).getName());
     }
 
-    private<T> GivenContinuation<T> given(T instance) {
-        return consumer-> consumer.accept(instance);
-    }
-
-    private interface GivenContinuation<T> {
-
-        void then(Consumer<T> consumer);
-    }
-
     @Test
     public void nestedLambdaWithEnclosedVariablesCanBeDecompiled() throws IOException {
         int expectedLength = 3;
@@ -157,6 +151,23 @@ public class CodeLocationDecompilerImplTest {
 
         assertEquals("assertEquals", it.getMethodName());
         assertArrayEquals(new Object[]{AST.constant("foo"), AST.constant("foo")}, it.getParameters().toArray());
+    }
+
+    private<T> GivenContinuation<T> given(T instance) {
+        return consumer-> consumer.accept(instance);
+    }
+
+    private interface GivenContinuation<T> {
+
+        void then(Consumer<T> consumer);
+    }
+
+    public static class Loop {
+
+        public Loop loop(String argument) {
+            return this;
+        }
+
     }
 
     private<T> ExpectContinuation<T> expect(T instance) {

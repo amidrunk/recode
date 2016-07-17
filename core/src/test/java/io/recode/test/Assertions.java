@@ -17,7 +17,7 @@ public class Assertions {
             command.call();
         } catch (Throwable throwable) {
             if (!exceptionMatcher.matches(throwable)) {
-                throw new AssertionError("Expected throwable to match");
+                throw new AssertionError("Expected throwable '" + throwable.getClass().getName() + "' to match");
             }
 
             failed = true;

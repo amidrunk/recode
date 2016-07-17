@@ -154,4 +154,16 @@ public class ModelQueryTest {
 
         assertFalse(result.isPresent());
     }
+
+    @Test
+    public void fieldQueryShouldMatchFieldWithMatchingProperties() {
+        // ModelQueries.field(ModelQueries.an"aField", String.class)
+    }
+
+    @Test
+    public void modelCanBeSearchedForMatchingQuery() {
+        final MethodCall model = AST.call(AST.field(AST.local("this", String.class, 0), String.class, "aString"), "aMethod", void.class);
+
+        // ModelQueries.field("")
+    }
 }

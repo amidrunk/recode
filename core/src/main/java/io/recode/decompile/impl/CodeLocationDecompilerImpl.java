@@ -55,7 +55,7 @@ public final class CodeLocationDecompilerImpl implements CodeLocationDecompiler 
         }
 
         final Method method = resolveMethodFromClassFile(classFile, codeLocation);
-        final Range codeRange = method.getCodeRangeForLineNumber(codeLocation.getLineNumber());
+        final Range codeRange = Methods.getCodeRangeForLineNumber(method, codeLocation.getLineNumber());
 
         try (CodeStream code = new InputStreamCodeStream(method.getCode().getCode())) {
             code.skip(codeRange.getFrom());
@@ -65,7 +65,7 @@ public final class CodeLocationDecompilerImpl implements CodeLocationDecompiler 
 
             final Element[] elements = decompiler.parse(method, code, new CompositeDecompilationProgressCallback(new DecompilationProgressCallbackAdapter() {
                 @Override
-                public void afterInstruction(DecompilationContext context) {
+                public void afterInstruction(DecompilationContext context, int instruction) {
                     // Abort as soon as (a) we've exceeded the PC and (b) the stack is empty
                     if (context.getProgramCounter().get() >= codeRange.getTo()) {
                         final List<Expression> stackedExpressions = context.getStackedExpressions();

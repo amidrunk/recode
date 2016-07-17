@@ -12,7 +12,7 @@ public final class DecompilationHistoryCallback extends DecompilationProgressCal
     private final List<DecompilerState> decompilerStates = new LinkedList<>();
 
     @Override
-    public void afterInstruction(DecompilationContext context) {
+    public void afterInstruction(DecompilationContext context, int instruction) {
         decompilerStates.add(new DecompilerState(new ArrayList<>(context.getStackedExpressions()), new ArrayList<>(context.getStatements())));
     }
 

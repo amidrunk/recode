@@ -32,6 +32,19 @@ public final class LineNumberTableImpl implements LineNumberTable {
     }
 
     @Override
+    public int getLineNumber(int pc) {
+        for (int i = entries.length - 1; i >= 0; i--) {
+            final LineNumberTableEntry entry = entries[i];
+
+            if (pc >= entry.getStartPC()) {
+                return entry.getLineNumber();
+            }
+        }
+
+        return -1;
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;

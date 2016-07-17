@@ -112,11 +112,6 @@ public class DefaultMethodTest {
     }
 
     @Test
-    public void getCodeForLineNumberShouldFailIfLineNumberTableIsNotPresent() {
-        assertThrown(() -> method.getCodeForLineNumber(1), IllegalStateException.class);
-    }
-
-    @Test
     public void getLocalVariableForIndexShouldFailForNegativeIndex() {
         assertThrown(() -> method.getLocalVariableForIndex(-1), AssertionError.class);
     }

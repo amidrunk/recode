@@ -1,15 +1,13 @@
 package io.recode.decompile.impl;
 
 import io.recode.RuntimeTypeResolver;
+import io.recode.classfile.ByteCode;
 import io.recode.classfile.LineNumberTable;
 import io.recode.classfile.Method;
 import io.recode.decompile.*;
 import io.recode.model.*;
 import io.recode.model.impl.DefaultModelFactory;
-import io.recode.util.LinkedSequence;
-import io.recode.util.SingleThreadedStack;
-import io.recode.util.TransformedSequence;
-import io.recode.util.TransformedStack;
+import io.recode.util.*;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -18,6 +16,9 @@ import java.util.Iterator;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.joining;
 
 public final class DecompilerImpl implements Decompiler {
 
@@ -35,6 +36,12 @@ public final class DecompilerImpl implements Decompiler {
 
     private void debug(DecompilationContext context, int lineNumber, int byteCode) {
         // TODO Debugging is nice, but shouldn't be implemented through a direct dependency to the code generator
+
+        final String byteCodeAsString = ByteCode.toString(byteCode);
+        final String stackDescription = context.getStackedExpressions().stream().map(DecompilerImpl::describe).collect(joining(", "));
+
+        System.out.println(String.format("%03d %s [%s]", lineNumber, Strings.rightPad(byteCodeAsString, 16, ' '), stackDescription));
+
         /* if (debugCodeGenerator != null) {
             final String stackedExpressions = context.getStackedExpressions().stream()
                     .map(e -> debugCodeGenerator.describe(new CodePointerImpl<>(context.getMethod(), e)).toString())
@@ -125,9 +132,7 @@ public final class DecompilerImpl implements Decompiler {
 
             instructionContext.update(byteCode, codeStream.pc().get(), lineNumberCounter.get());
 
-            if (debug) {
-                debug(context, lineNumberCounter.get(), byteCode);
-            }
+            callback.beforeInstruction(context, byteCode);
 
             advice(configuration, context, codeStream, byteCode);
 
@@ -137,9 +142,13 @@ public final class DecompilerImpl implements Decompiler {
                 delegate.apply(context, codeStream, byteCode);
             }
 
+            if (debug) {
+                debug(context, lineNumberCounter.get(), byteCode);
+            }
+
             correct(configuration, context, codeStream, byteCode);
 
-            callback.afterInstruction(context);
+            callback.afterInstruction(context, byteCode);
         }
 
         context.reduceAll();
@@ -208,6 +217,61 @@ public final class DecompilerImpl implements Decompiler {
                 return element;
             }
         };
+    }
+
+    // TODO Move
+    private static String describe(Element e) {
+        switch (e.getElementType()) {
+            case VARIABLE_REFERENCE: {
+                final LocalVariableReference variableReference = e.as(LocalVariableReference.class);
+                return variableReference.getName();
+            }
+            case METHOD_CALL: {
+                final MethodCall methodCall = e.as(MethodCall.class);
+                final String parameterList = methodCall.getParameters().stream()
+                        .map(DecompilerImpl::describe)
+                        .collect(joining(", "));
+
+                if (methodCall.getTargetInstance() == null) {
+                    return methodCall.getTargetType().getTypeName() + "." + methodCall.getMethodName() + "(" + parameterList + ")";
+                } else {
+                    return describe(methodCall.getTargetInstance()) + "." + methodCall.getMethodName() + "(" + parameterList + ")";
+                }
+            }
+            case CONSTANT: {
+                final Object value = e.as(Constant.class).getConstant();
+
+                if (value instanceof String) {
+                    return "\"" + value + "\"";
+                } else if (value instanceof Character) {
+                    return "'" + value + "'";
+                } else {
+                    return String.valueOf(value);
+                }
+            }
+            case FIELD_REFERENCE: {
+                final FieldReference fieldReference = e.as(FieldReference.class);
+
+                return fieldReference.getTargetInstance()
+                        .map(DecompilerImpl::describe)
+                        .orElse(fieldReference.getDeclaringType().getTypeName())
+                        + "." + fieldReference.getFieldName();
+            }
+            case NEW: {
+                final NewInstance newInstance = e.as(NewInstance.class);
+
+                return "new " + newInstance.getType().getTypeName() + "("
+                        + newInstance.getParameters().stream().map(DecompilerImpl::describe).collect(joining(", ")) + ")";
+            }
+            case LAMBDA: {
+                final Lambda lambda = e.as(Lambda.class);
+
+                return "(" + lambda.getEnclosedVariables().stream().map(LocalVariableReference::getName)
+                        .collect(joining(", ")) + ") => {...}";
+            }
+            default:
+                return String.valueOf(e);
+        }
     }
 
     private static final class InstructionContextImpl implements InstructionContext {

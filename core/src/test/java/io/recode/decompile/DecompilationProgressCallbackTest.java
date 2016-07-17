@@ -1,5 +1,6 @@
 package io.recode.decompile;
 
+import io.recode.classfile.ByteCode;
 import org.junit.Test;
 
 import static org.mockito.Mockito.mock;
@@ -12,7 +13,7 @@ public class DecompilationProgressCallbackTest {
         final DecompilationContext context = mock(DecompilationContext.class);
 
         try {
-            DecompilationProgressCallback.NULL.afterInstruction(context);
+            DecompilationProgressCallback.NULL.afterInstruction(context, ByteCode.nop);
         } catch (Exception e) {
             throw e;
         }

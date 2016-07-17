@@ -24,32 +24,21 @@ public class CompositeDecompilationProgressCallbackTest {
 
     @Test
     public void beforeInstructionShouldDelegateToTargetCallbacks() {
-        callback.beforeInstruction(context);
+        callback.beforeInstruction(context, ByteCode.aaload);
 
         final InOrder inOrder = Mockito.inOrder(callback1, callback2);
 
-        inOrder.verify(callback1).beforeInstruction(eq(context));
-        inOrder.verify(callback2).beforeInstruction(eq(context));
-    }
-
-    @Test
-    public void preparingInstructionShouldDelegateToTargetCallbacks() {
-        callback.preparingInstruction(context, ByteCode.nop);
-
-        final InOrder inOrder = Mockito.inOrder(callback1, callback2);
-
-        inOrder.verify(callback1).preparingInstruction(eq(context), eq(ByteCode.nop));
-        inOrder.verify(callback2).preparingInstruction(eq(context), eq(ByteCode.nop));
+        inOrder.verify(callback1).beforeInstruction(eq(context), eq(ByteCode.aaload));
+        inOrder.verify(callback2).beforeInstruction(eq(context), eq(ByteCode.aaload));
     }
 
     @Test
     public void afterInstructionShouldDelegateToTargetCallbacks() {
-        callback.afterInstruction(context);
+        callback.afterInstruction(context, ByteCode.aaload);
 
         final InOrder inOrder = Mockito.inOrder(callback1, callback2);
 
-        inOrder.verify(callback1).afterInstruction(eq(context));
-        inOrder.verify(callback2).afterInstruction(eq(context));
+        inOrder.verify(callback1).afterInstruction(eq(context), eq(ByteCode.aaload));
+        inOrder.verify(callback2).afterInstruction(eq(context), eq(ByteCode.aaload));
     }
-
 }

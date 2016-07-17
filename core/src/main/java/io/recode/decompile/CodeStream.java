@@ -1,7 +1,5 @@
 package io.recode.decompile;
 
-import io.recode.decompile.ProgramCounter;
-
 import java.io.IOException;
 
 public interface CodeStream extends AutoCloseable {

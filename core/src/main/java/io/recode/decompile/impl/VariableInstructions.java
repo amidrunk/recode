@@ -10,6 +10,7 @@ import io.recode.util.Methods;
 import io.recode.classfile.ByteCode;
 import io.recode.classfile.LocalVariable;
 
+import java.lang.reflect.Modifier;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -126,6 +127,15 @@ public final class VariableInstructions implements DecompilerDelegation {
         final Optional<LocalVariable> localVariableOptional = Methods.findLocalVariableForIndexAndPC(context.getMethod(), index, pc);
 
         if (!localVariableOptional.isPresent()) {
+            // There can still be a local, but it's impossible to know its typ if it is not a a "this" or a parameter...
+            // TODO: Make sure this is handled for static methods and for parameters as well
+            if (!Modifier.isStatic(context.getMethod().getAccessFlags())) {
+                if (index == 0) {
+                    context.push(AST.local("this", context.resolveType(context.getMethod().getClassFile().getName().replace('.', '/')), index));
+                    return;
+                }
+            }
+
             throw localVariableNotAvailableException("Variable can't be loaded", context, index, pc);
         }
 

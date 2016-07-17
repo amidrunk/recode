@@ -103,4 +103,7 @@ public interface ModelQuery<S, R> {
         };
     }
 
+    default<T> Optional<T> search(Element element) {
+        return null;
+    }
 }

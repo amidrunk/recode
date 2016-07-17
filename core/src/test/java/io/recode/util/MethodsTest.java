@@ -1,13 +1,19 @@
 package io.recode.util;
 
+import io.recode.Caller;
 import io.recode.classfile.*;
 import io.recode.classfile.impl.*;
-import io.recode.model.MethodSignature;
-import io.recode.model.Signature;
+import io.recode.decompile.CodeLocationDecompiler;
+import io.recode.decompile.CodePointer;
+import io.recode.decompile.impl.CodeLocationDecompilerImpl;
+import io.recode.decompile.impl.CodeStreamTestUtils;
+import io.recode.decompile.impl.DecompilerImpl;
+import io.recode.model.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -200,6 +206,114 @@ public class MethodsTest {
         assertTrue(Methods.containsLineNumber(method, 11));
         assertFalse(Methods.containsLineNumber(method, 12));
     }
+
+    @Test
+    public void getCodeForLineNumberShouldFailIfLineNumberTableIsNotPresent() {
+        final Method method = mock(Method.class);
+        final ClassFile classFile = mock(ClassFile.class);
+
+        when(method.getClassFile()).thenReturn(classFile);
+        when(classFile.getName()).thenReturn("AClass");
+
+        when(method.getLineNumberTable()).thenReturn(Optional.empty());
+
+        assertThrown(() -> Methods.getCodeForLineNumber(method, 1), IllegalArgumentException.class);
+    }
+
+    @Test
+    public void isVarArgsMethodCallShouldReturnTrueIfTargetMethodIsVarArgs() {
+        final MethodCall methodCall = AST.call(String.class, "format", MethodSignature.parse("(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;"));
+
+        assertTrue(Methods.isDefinitelyVarArgsMethodCall(methodCall));
+    }
+
+    @Test
+    public void isVarArgsMethodCallShouldReturnFalseIfTargetMethodIsNotVarArgs() {
+        final MethodCall methodCall = AST.call(String.class, "substring", MethodSignature.parse("(I)Ljava/lang/String;"));
+
+        assertFalse(Methods.isDefinitelyVarArgsMethodCall(methodCall));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void methodCanBeResolvedForInlineLambda() throws Exception {
+        final Runnable r = () -> nop();
+
+        final CodePointer<?> codePointer = new CodeLocationDecompilerImpl().decompileCodeLocation(Caller.adjacent(-2))[0];
+        final Lambda lambda = codePointer.getElement().as(VariableAssignment.class).getValue().as(Lambda.class);
+        final Method backingMethod = Methods.getBackingMethod(codePointer.forElement(lambda)).get();
+        final Element[] lambdaBody = new DecompilerImpl().decompile(backingMethod);
+
+        assertArrayEquals(new Element[] {
+            AST.call(AST.local("this", MethodsTest.class, 0), "nop", void.class),
+            AST.$return()
+        }, lambdaBody);
+    }
+
+    @Test
+    public void backingMethodCanBeResolvedForInstanceMethodReference() throws Exception {
+        final Runnable r = this::nop;
+
+        final CodePointer<?> codePointer = new CodeLocationDecompilerImpl().decompileCodeLocation(Caller.adjacent(-2))[0];
+        final Lambda lambda = codePointer.getElement().as(VariableAssignment.class).getValue().as(Lambda.class);
+        final Method backingMethod = Methods.getBackingMethod(codePointer.forElement(lambda)).get();
+        final Element[] lambdaBody = new DecompilerImpl().decompile(backingMethod);
+
+        assertEquals("nop", backingMethod.getName());
+        assertArrayEquals(new Element[] {
+                AST.$return()
+        }, lambdaBody);
+    }
+
+    @Test
+    public void backingMethodCanBeResolvedForStaticMethodReference() throws Exception {
+        final Runnable r = MethodsTest::staticNop;
+
+        final CodePointer<?> codePointer = new CodeLocationDecompilerImpl().decompileCodeLocation(Caller.adjacent(-2))[0];
+        final Lambda lambda = codePointer.getElement().as(VariableAssignment.class).getValue().as(Lambda.class);
+        final Method backingMethod = Methods.getBackingMethod(codePointer.forElement(lambda)).get();
+        final Element[] lambdaBody = new DecompilerImpl().decompile(backingMethod);
+
+        assertEquals("staticNop", backingMethod.getName());
+        assertArrayEquals(new Element[] {
+                AST.$return()
+        }, lambdaBody);
+    }
+
+    @Test
+    public void backingMethodCanBeResolvedForReferenceToInstanceMethodInOtherClass() throws Exception {
+        final Runnable runnable = "foo"::isEmpty;
+
+        final CodePointer<?> codePointer = new CodeLocationDecompilerImpl().decompileCodeLocation(Caller.adjacent(-2))[0];
+        final Lambda lambda = codePointer.getElement().as(VariableAssignment.class).getValue().as(Lambda.class);
+        final Method backingMethod = Methods.getBackingMethod(new ClassPathClassFileResolver(new ClassFileReaderImpl()), codePointer.forElement(lambda)).get();
+        final Element[] lambdaBody = new DecompilerImpl().decompile(backingMethod);
+
+        assertEquals("isEmpty", backingMethod.getName());
+        assertArrayEquals(new Element[] {
+            AST.$return(AST.eq(AST.field(AST.field(AST.local("this", String.class, 0), char[].class, "value"), int.class, "length"), AST.constant(0)))
+        }, lambdaBody);
+    }
+
+    @Test
+    public void backingMethodCanBeResolvedForReferenceToStaticMethodInOtherClass() throws Exception {
+        final Runnable runnable = System.out::println;
+
+        final CodePointer<?> codePointer = new CodeLocationDecompilerImpl().decompileCodeLocation(Caller.adjacent(-2))[0];
+        final Lambda lambda = codePointer.getElement().as(VariableAssignment.class).getValue().as(Lambda.class);
+        final Method backingMethod = Methods.getBackingMethod(new ClassPathClassFileResolver(new ClassFileReaderImpl()), codePointer.forElement(lambda)).get();
+        final Element[] lambdaBody = new DecompilerImpl().decompile(backingMethod);
+
+        assertEquals("println", backingMethod.getName());
+        assertArrayEquals(new Element[] {
+            AST.call(AST.local("this", PrintStream.class, 0), "newLine", void.class),
+            AST.$return()
+        }, lambdaBody);
+    }
+
+    private void nop() {}
+
+    private static void staticNop() {}
 
     private Method method(String name, int firstLineNumber, int lastLineNumber) {
         final Method method = mock(Method.class);

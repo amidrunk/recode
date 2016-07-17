@@ -107,4 +107,13 @@ public final class ModelQueries {
     }
 
 
+    public static<T extends Element> Predicate<T> any() {
+        return expression -> true;
+    }
+
+    public static Predicate<FieldReference> field(Predicate<Expression> instance, String name, Type type) {
+        return e -> e.getTargetInstance().map(instance::test).orElse(false)
+                && Objects.equals(e.getFieldName(), name)
+                && Objects.equals(e.getFieldType(), type);
+    }
 }

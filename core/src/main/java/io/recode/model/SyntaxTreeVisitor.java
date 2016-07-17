@@ -1,5 +1,7 @@
 package io.recode.model;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
@@ -16,6 +18,23 @@ public final class SyntaxTreeVisitor {
 
         void visit(Walker walker, Element element);
 
+    }
+
+    public static List<Element> collect(Element[] elements, Predicate<Element> predicate) {
+        assert elements != null : "elements can't be null";
+        assert predicate != null : "predicate can't be null";
+
+        final LinkedList<Element> result = new LinkedList<>();
+
+        for (final Element element : elements) {
+            visit(element, (walker, currentElement) -> {
+                if (predicate.test(currentElement)) {
+                    result.add(currentElement);
+                }
+            });
+        }
+
+        return result;
     }
 
     public static Optional<Element> search(Element[] elements, Predicate<Element> predicate) {

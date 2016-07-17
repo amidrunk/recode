@@ -117,10 +117,10 @@ public final class ByteCode {
     public static final int ldiv = 109;
     public static final int fdiv = 110;
     public static final int ddiv = 111;
-    public static final int imod = 112;
-    public static final int lmod = 113;
-    public static final int fmod = 114;
-    public static final int dmod = 115;
+    public static final int irem = 112;
+    public static final int lrem = 113;
+    public static final int frem = 114;
+    public static final int drem = 115;
     public static final int ineg = 116;
     public static final int lneg = 117;
     public static final int fneg = 118;
@@ -240,17 +240,17 @@ public final class ByteCode {
     }
 
     public static int[] integerLoadInstructions() {
-        return new int[] {
-            iload,
-            iload_0,
-            iload_1,
-            iload_2,
-            iload_3
+        return new int[]{
+                iload,
+                iload_0,
+                iload_1,
+                iload_2,
+                iload_3
         };
     }
 
     public static int[] integerStoreInstructions() {
-        return new int[] {
+        return new int[]{
                 istore,
                 istore_0,
                 istore_1,
@@ -260,7 +260,7 @@ public final class ByteCode {
     }
 
     public static int[] longStoreInstructions() {
-        return new int[] {
+        return new int[]{
                 lstore,
                 lstore_0,
                 lstore_1,
@@ -270,7 +270,7 @@ public final class ByteCode {
     }
 
     public static int[] doubleStoreInstructions() {
-        return new int[] {
+        return new int[]{
                 dstore,
                 dstore_0,
                 dstore_1,
@@ -280,7 +280,7 @@ public final class ByteCode {
     }
 
     public static int[] floatStoreInstructions() {
-        return new int[] {
+        return new int[]{
                 fstore,
                 fstore_0,
                 fstore_1,
@@ -290,7 +290,7 @@ public final class ByteCode {
     }
 
     public static int[] primitiveLoadInstructions() {
-        return new int[] {
+        return new int[]{
                 iload,
                 iload_0,
                 iload_1,
@@ -316,7 +316,7 @@ public final class ByteCode {
     }
 
     public static int[] loadInstructions() {
-        return new int[] {
+        return new int[]{
                 iload,
                 iload_0,
                 iload_1,
@@ -347,17 +347,239 @@ public final class ByteCode {
     }
 
     public static String toString(int byteCode) {
+        final int targetByteCode = byteCode & 0xFF;
+
         return Arrays.asList(ByteCode.class.getFields()).stream().filter(f -> {
             try {
-                return f.get(null).equals(byteCode & 0xFF);
+                return f.get(null).equals(targetByteCode);
             } catch (IllegalAccessException e) {
                 throw new RuntimeException("Failed to access field: " + f.getName());
             }
-        }).findFirst().map(java.lang.reflect.Field::getName).get();
+        }).findFirst().map(java.lang.reflect.Field::getName).orElseThrow(() -> new IllegalArgumentException("Invalid byte code value: " + targetByteCode));
     }
 
     public static boolean isValid(int byteCode) {
         return byteCode >= 0 && byteCode <= 255;
     }
 
+    /**
+     * Returns the width of a byte code, i.e. the number of bytes the byte code requires.
+     * This will be greater than 1 bytes that requires an operand such as a constant pool
+     * reference.
+     *
+     * @param byteCode The byte code whose width should be returned.
+     * @return The width of the byte code.
+     */
+    public static int getWidth(int byteCode) {
+        switch (byteCode) {
+            case aaload:
+            case aastore:
+            case aconst_null:
+            case aload_0:
+            case aload_1:
+            case aload_2:
+            case aload_3:
+            case areturn:
+            case arraylength:
+            case astore_0:
+            case astore_1:
+            case astore_2:
+            case astore_3:
+            case athrow:
+            case baload:
+            case bastore:
+            case breakpoint:
+            case caload:
+            case castore:
+            case d2f:
+            case d2i:
+            case d2l:
+            case dadd:
+            case daload:
+            case dastore:
+            case dcmpg:
+            case dcmpl:
+            case dconst_0:
+            case dconst_1:
+            case ddiv:
+            case dload_0:
+            case dload_1:
+            case dload_2:
+            case dload_3:
+            case dmul:
+            case dneg:
+            case drem:
+            case dreturn:
+            case dstore_0:
+            case dstore_1:
+            case dstore_2:
+            case dstore_3:
+            case dsub:
+            case dup:
+            case dup_x1:
+            case dup_x2:
+            case dup2:
+            case dup2_x1:
+            case dup2_x2:
+            case f2d:
+            case f2i:
+            case f2l:
+            case fadd:
+            case faload:
+            case fastore:
+            case fcmpg:
+            case fcmpl:
+            case fconst_0:
+            case fconst_1:
+            case fconst_2:
+            case fdiv:
+            case fmul:
+            case fneg:
+            case frem:
+            case freturn:
+            case fstore_0:
+            case fstore_1:
+            case fstore_2:
+            case fstore_3:
+            case fsub:
+            case i2b:
+            case i2c:
+            case i2d:
+            case i2f:
+            case i2s:
+            case iadd:
+            case iaload:
+            case iand:
+            case iastore:
+            case iconst_m1:
+            case iconst_0:
+            case iconst_1:
+            case iconst_2:
+            case iconst_3:
+            case iconst_4:
+            case iconst_5:
+            case idiv:
+            case iload_0:
+            case iload_1:
+            case iload_2:
+            case iload_3:
+            case imul:
+            case ineg:
+            case ior:
+            case irem:
+            case ireturn:
+            case ishl:
+            case ishr:
+            case istore_0:
+            case istore_1:
+            case istore_2:
+            case istore_3:
+            case isub:
+            case iushr:
+            case ixor:
+            case l2d:
+            case l2f:
+            case l2i:
+            case ladd:
+            case laload:
+            case land:
+            case lastore:
+            case lcmp:
+            case lconst_0:
+            case lconst_1:
+            case ldiv:
+            case lload_0:
+            case lload_1:
+            case lload_2:
+            case lload_3:
+            case lmul:
+            case lneg:
+            case lor:
+            case lrem:
+            case lreturn:
+            case lshl:
+            case lshr:
+            case lstore_0:
+            case lstore_1:
+            case lstore_2:
+            case lstore_3:
+            case lsub:
+            case lushr:
+            case lxor:
+            case monitorenter:
+            case monitorexit:
+            case nop:
+            case pop:
+            case pop2:
+            case return_:
+            case saload:
+            case sastore:
+            case swap:
+                return 1;
+            case aload:
+            case astore:
+            case bipush:
+            case dload:
+            case dstore:
+            case fload:
+            case fstore:
+            case iload:
+            case istore:
+            case ldc:
+            case lload:
+            case lstore:
+            case newarray:
+            case ret:
+                return 2;
+            case anewarray:
+            case checkcast:
+            case getfield:
+            case getstatic:
+            case goto_:
+            case if_acmpeq:
+            case if_acmpne:
+            case if_icmpeq:
+            case if_icmpge:
+            case if_icmpgt:
+            case if_icmple:
+            case if_icmplt:
+            case if_icmpne:
+            case ifeq:
+            case ifge:
+            case ifgt:
+            case ifle:
+            case iflt:
+            case ifne:
+            case if_acmp_nonnull:
+            case if_acmp_null:
+            case iinc:
+            case instanceof_:
+            case invokespecial:
+            case invokestatic:
+            case invokevirtual:
+            case jsr:
+            case ldcw:
+            case ldc2w:
+            case new_:
+            case putfield:
+            case putstatic:
+            case sipush:
+                return 3;
+            case multianewarray:
+                return 4;
+            case goto_w:
+            case invokedynamic:
+            case invokeinterface:
+            case jsr_w:
+                return 5;
+            case wide:
+                throw new IllegalArgumentException("Instruction 'wide' extends next instruction");
+            case tableswitch:
+                throw new IllegalArgumentException("Instruction 'tableswitch' is variable in length");
+            case lookupswitch:
+                throw new IllegalArgumentException("Instruction 'lookupswitch' is variable in length");
+            default:
+                throw new IllegalArgumentException("Invalid byte code " + byteCode);
+        }
+    }
 }

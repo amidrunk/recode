@@ -53,4 +53,31 @@ public class LineNumberTableImplTest {
         assertTrue(exampleTable.toString().contains(exampleEntry.toString()));
         assertTrue(exampleTable.toString().contains(new Range(1, 2).toString()));
     }
+
+    @Test
+    public void lineNumberShouldBeNegativeIfNoLineNumberExistsForPc() {
+        final LineNumberTableImpl table = new LineNumberTableImpl(new LineNumberTableEntry[]{}, Range.from(10).to(20));
+
+        assertEquals(-1, table.getLineNumber(100));
+    }
+
+    @Test
+    public void lineNumberShouldBeReturnedForMapping() {
+        final LineNumberTable lineNumberTable = new LineNumberTableImpl(new LineNumberTableEntry[]{
+                new LineNumberTableEntryImpl(0, 10),
+                new LineNumberTableEntryImpl(12, 11),
+                new LineNumberTableEntryImpl(23, 12),
+                new LineNumberTableEntryImpl(40, 13)
+        }, Range.from(10).to(45));
+
+        assertEquals(10, lineNumberTable.getLineNumber(0));
+        assertEquals(10, lineNumberTable.getLineNumber(1));
+        assertEquals(10, lineNumberTable.getLineNumber(11));
+        assertEquals(11, lineNumberTable.getLineNumber(12));
+        assertEquals(11, lineNumberTable.getLineNumber(22));
+        assertEquals(12, lineNumberTable.getLineNumber(23));
+        assertEquals(12, lineNumberTable.getLineNumber(39));
+        assertEquals(13, lineNumberTable.getLineNumber(40));
+        assertEquals(13, lineNumberTable.getLineNumber(100));
+    }
 }

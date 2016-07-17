@@ -4,10 +4,8 @@ public interface DecompilationProgressCallback {
 
     DecompilationProgressCallback NULL = new DecompilationProgressCallbackAdapter();
 
-    void beforeInstruction(DecompilationContext context);
+    void beforeInstruction(DecompilationContext context, int instruction);
 
-    void preparingInstruction(DecompilationContext context, int instruction);
-
-    void afterInstruction(DecompilationContext context);
+    void afterInstruction(DecompilationContext context, int instruction);
 
 }

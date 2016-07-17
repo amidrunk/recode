@@ -12,7 +12,7 @@ public final class Range {
     private final int to;
 
     public Range(int from, int to) {
-        assert from <= to : "From must be less than or equal to to";
+        assert from <= to : "From (" + from + ") must be less than or equal to " + to;
 
         this.from = from;
         this.to = to;

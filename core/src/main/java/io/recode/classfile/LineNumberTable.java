@@ -12,6 +12,8 @@ public interface LineNumberTable extends Attribute {
 
     Range getSourceFileRange();
 
+    int getLineNumber(int pc);
+
     default String getName() {
         return ATTRIBUTE_NAME;
     }
